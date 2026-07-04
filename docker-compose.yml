@@ -1,0 +1,39 @@
+services:
+  srs:
+    image: ossrs/srs:6
+    container_name: srs-enhanced-rtmp
+    restart: unless-stopped
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "1935:1935"
+      - "1985:1985"
+      - "8080:8080"
+    volumes:
+      - ./srs.conf:/usr/local/srs/conf/srs-enhanced-rtmp.conf:ro
+    command: ["./objs/srs", "-c", "conf/srs-enhanced-rtmp.conf"]
+
+  puller:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    image: srs-enhanced-rtmp-puller:local
+    container_name: srs-enhanced-rtmp-puller
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SRS_RTMP_BASE_URL: "auto"
+      #UDPXY_BASE_URL: "192.168.10.1:4000"
+      MAX_STREAMS: "3"
+      IDLE_STOP_SEC: "5"
+      RTMP_PORT: "1935"
+      PULLER_PORT: "18090"
+      FFMPEG_LOGLEVEL: "warning"
+      AUDIO_BITRATE: "128k"
+      FFPROBE_TIMEOUT_SEC: "8"
+      UDP_FIFO_SIZE: "1000000"
+      UDP_TIMEOUT_US: "5000000"
+      # Set only when direct multicast must bind to a specific LAN address.
+      UDP_LOCALADDR: "192.168.10.12"
